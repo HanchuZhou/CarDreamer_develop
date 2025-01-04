@@ -1,10 +1,8 @@
+from . import limiters, selectors
 from .generic import Generic
-from .reverb import Reverb
-from .replays import Uniform
-from .naive_chunks import NaiveChunks
-from .curious_replay import CuriousReplay
 from .prioritized_experience_replay import PrioritizedExperienceReplay
-from .count_based import CountBasedReplay
+from .replays import Uniform
+from .reverb import Reverb
+from .curious_replay import CuriousReplay
 from .adversarial import AdversarialReplay
-from . import selectors
-from . import limiters
+from .count_based import CountBasedReplay
