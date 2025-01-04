@@ -122,3 +122,4 @@ venv.bak/
 .mypy_cache/
 
 events.out.tfevents.*
+*.jsonl
