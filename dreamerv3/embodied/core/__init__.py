@@ -5,7 +5,7 @@ from .basics import format_ as format
 from .basics import pack
 from .basics import print_ as print
 from .basics import treemap, unpack
-from .batch import BatchEnv
+from .batch import BatchEnv, BatchAgentEnv
 from .batcher import Batcher
 from .checkpoint import Checkpoint
 from .config import Config
@@ -22,3 +22,4 @@ from .space import Space
 from .timer import Timer
 from .uuid import uuid
 from .worker import Worker
+from .ma_driver import MADriver

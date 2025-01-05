@@ -10,6 +10,7 @@ The Development Suite aims at facilitating creation of new urban driving tasks.
 
 from .carla_base_env import CarlaBaseEnv
 from .carla_four_lane_env import CarlaFourLaneEnv
+from .carla_four_lane_ma_env import CarlaFourLaneMaEnv
 from .carla_lane_merge_env import CarlaLaneMergeEnv
 from .carla_left_turn_env import CarlaLeftTurnEnv
 from .carla_navigation_env import CarlaNavigationEnv
