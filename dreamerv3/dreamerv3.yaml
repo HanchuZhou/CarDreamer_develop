@@ -40,6 +40,7 @@ defaults:
     log_keys_mean: "(log_entropy)"
     log_keys_max: "^$"
     from_checkpoint: ""
+    ma_checkpoint: ""
     sync_every: 10
 
   envs:

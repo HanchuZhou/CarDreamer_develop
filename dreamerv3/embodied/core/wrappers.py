@@ -153,6 +153,34 @@ class OneHotAction(base.Wrapper):
         return action
 
 
+class MAOneHotAction(base.Wrapper):
+    def __init__(self, env, key="action"):
+        super().__init__(env)
+        self._count = int(env.act_space[key].high)
+        self._key = key
+
+    @functools.cached_property
+    def act_space(self):
+        shape = (self._count,)
+        space = spacelib.Space(np.float32, shape, 0, 1)
+        space.sample = functools.partial(self._sample_action, self._count)
+        space._discrete = True
+        return {**self.env.act_space, self._key: space}
+
+    def step(self, action):
+        indices = []
+        for i in range(2):
+            indices.append(np.argmax(action[i][self._key]))
+        return self.env.step({self._key: indices, "reset": action["reset"]})
+
+    @staticmethod
+    def _sample_action(count):
+        index = np.random.randint(0, count)
+        action = np.zeros(count, dtype=np.float32)
+        action[index] = 1.0
+        return action
+
+
 class ExpandScalars(base.Wrapper):
     def __init__(self, env):
         super().__init__(env)

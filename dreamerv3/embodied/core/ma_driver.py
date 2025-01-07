@@ -41,6 +41,12 @@ class MADriver:
         self._on_episodes.append(callback)
 
     def __call__(self, policy, steps=0, episodes=0):
+        """
+        Args:
+            policy: Can be either a single policy function or a list of policy functions
+                   If single policy: Applied to all agents
+                   If list: policies[0] applied to agent 0, policies[1] applied to rest
+        """
         step, episode = 0, 0
         while step < steps or episode < episodes:
             step, episode = self._step(policy, step, episode)
@@ -54,7 +60,7 @@ class MADriver:
             tmp_obs[str(i)] = {}
             for k, v in obs.items():
                 if k.startswith(f"{i}/"):
-                    tmp_obs[str(i)][k[len(f"{i}/") :]] = v
+                    tmp_obs[str(i)][k[len(f"{i}/"):]] = v
                 else:
                     tmp_obs[str(i)][k] = v
         for i in range(self._num_agents):
@@ -65,16 +71,28 @@ class MADriver:
             tmp_info[str(i)] = {}
             for k, v in info.items():
                 if k.startswith(f"{i}/"):
-                    tmp_info[str(i)][k[len(f"{i}/") :]] = v
+                    tmp_info[str(i)][k[len(f"{i}/"):]] = v
                 else:
                     tmp_info[str(i)][k] = v
         for i in range(self._num_agents):
             info[str(i)] = tmp_info[str(i)]
 
-        for i in range(self._num_agents):
-            agent_acts, self._state[i] = policy(obs[str(i)], self._state[i], **self._kwargs)
-            for k, v in agent_acts.items():
-                acts[i][k] = convert(v)
+        # Handle different policy formats
+        if isinstance(policy, (list, tuple)):
+            # Multi-agent mode: policy[0] for training agent, policy[1] for others
+            for i in range(self._num_agents):
+                if i == 0:
+                    agent_acts, self._state[i] = policy[0](obs[str(i)], self._state[i], **self._kwargs)
+                else:
+                    agent_acts, self._state[i] = policy[1](obs[str(i)], self._state[i], **self._kwargs)
+                for k, v in agent_acts.items():
+                    acts[i][k] = convert(v)
+        else:
+            # Single agent mode
+            for i in range(self._num_agents):
+                agent_acts, self._state[i] = policy(obs[str(i)], self._state[i], **self._kwargs)
+                for k, v in agent_acts.items():
+                    acts[i][k] = convert(v)
 
         for i in range(self._num_agents):
             if obs["is_last"].any():
@@ -111,8 +129,8 @@ class MADriver:
                         ep = {k: convert(v) for k, v in self._eps[i][j].items()}
                         ep_info = {k: convert(v) for k, v in self._eps_info[i][j].items()}
                         [fn(ep.copy(), ep_info.copy(), i, **self._kwargs) for fn in self._on_episodes]
-                        self._state[i][1]["step"] = np.zeros_like(self._state[i][1]["step"], np.int8)
-                        self._state[i][2]["step"] = np.zeros_like(self._state[i][1]["step"], np.int8)
+                        # self._state[i][1]["step"] = np.zeros_like(self._state[i][1]["step"], np.int8)
+                        # self._state[i][2]["step"] = np.zeros_like(self._state[i][1]["step"], np.int8)
                         # self._state[i] = None
             episode += 1
 

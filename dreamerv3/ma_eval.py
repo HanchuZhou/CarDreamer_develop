@@ -18,7 +18,7 @@ def wrap_env(env, config):
         if name == "reset":
             continue
         elif space.discrete:
-            env = embodied.wrappers.OneHotAction(env, name)
+            env = embodied.wrappers.MAOneHotAction(env, name)
         elif args.discretize:
             env = embodied.wrappers.DiscretizeAction(env, name, args.discretize)
         else:
@@ -152,7 +152,7 @@ def main(argv=None):
     for agent_idx in range(config.env.num_agents):
         agent_config = dreamerv3_config.update(
             {
-                "jax.policy_devices": [0],
+                "jax.policy_devices": [agent_idx],
             }
         )
         agents.append(dreamerv3.Agent(env.obs_space, env.act_space, step, agent_config))

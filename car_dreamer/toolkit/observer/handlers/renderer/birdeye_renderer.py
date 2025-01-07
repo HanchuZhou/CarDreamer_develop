@@ -112,10 +112,10 @@ class BirdeyeRenderer:
         cv2.line(surface, ego_location_pixel, left_fov_endpoint_pixel, Color.ORANGE_1, 3)
         cv2.line(surface, ego_location_pixel, right_fov_endpoint_pixel, Color.ORANGE_1, 3)
 
-    def _render_waypoints(self, **env_state):
+    def _render_waypoints(self, length=None, path_color=None, idx=None, id=None, **env_state):
         """
-        Render the waypoints for the ego actor on the surface.
-        You must provide 'ego_waypoints'.
+        Render the waypoints for the ego actor on the surface. Also render the non-ego agent waypoints in multi-agent tasks.
+        You must provide 'ego_waypoints' or 'ma_agent_waypoints'.
         """
         if "dest_x" in env_state:
             dest_start = carla.Location(x=env_state["dest_x"], y=self._ego.get_transform().location.y - 16)
@@ -123,9 +123,15 @@ class BirdeyeRenderer:
             dest_end = carla.Location(x=env_state["dest_x"], y=self._ego.get_transform().location.y + 10)
             dest_end = self._world_to_pixel(dest_end)
             cv2.line(self._surface, dest_start, dest_end, Color.SKY_BLUE_0, 6)
-        color = env_state.get("waypoints_color", Color.BLUE)
+        color = path_color or env_state.get("waypoints_color", Color.BLUE)
         ego_waypoints = env_state["ego_waypoints"]
-        ego_polygon = self._world_manager.actor_polygons[self._ego.id]
+        # In multi-agent, render the waypoints of non-ego MA agents
+        if idx is not None:
+            wpts = env_state["ma_agent_waypoints"]
+            ego_waypoints = wpts[idx]
+        if length is not None:
+            ego_waypoints = ego_waypoints[:length]
+        ego_polygon = self._world_manager.actor_polygons[id if id is not None else self._ego.id]
         self._render_path(self._surface, ego_polygon, ego_waypoints, color)
 
     def _render_background_vehicles(self, **env_state):
@@ -147,7 +153,9 @@ class BirdeyeRenderer:
     def _render_background_waypoints(self, **env_state):
         """Render the waypoints for background actors on the surface."""
         color = env_state.get("background_waypoints_color")
+        ma_color = env_state.get("ma_agent_waypoints_color")
         extend_waypoints = env_state.get("extend_waypoints", False)
+        ma_ids = env_state.get("ma_agent_ids", [])
         background_waypoints = self._world_manager.actor_actions
         background_waypoints = {
             id: [(action[1].transform.location.x, action[1].transform.location.y) for action in actions]
@@ -157,6 +165,10 @@ class BirdeyeRenderer:
         vehicle_polygons = self._world_manager.actor_polygons
 
         for vehicle_id, path in background_waypoints.items():
+            # Render non-ego MA agents waypoints
+            for idx, agent_id in enumerate(ma_ids):
+                if agent_id != self._ego.id:
+                    self._render_waypoints(length=20, path_color=ma_color, idx=idx, id=agent_id, **env_state)
             if vehicle_id == self._ego.id or should_filter(
                 self._ego.get_transform(),
                 self._world_manager.actor_transforms[vehicle_id],

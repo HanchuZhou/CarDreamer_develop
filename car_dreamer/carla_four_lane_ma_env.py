@@ -169,7 +169,10 @@ class CarlaWptEnv(CarlaBaseEnv):
     def get_state(self):
         state = {}
         for i in range(self._config.num_agents):
-            state[i] = {"ego_waypoints": self.waypoints[i]}
+            state[i] = {
+                "ego_waypoints": self.waypoints[i],
+                "ma_agent_waypoints": self.waypoints
+            }
         return state
 
     def apply_control(self, actions) -> None:
@@ -180,7 +183,9 @@ class CarlaWptEnv(CarlaBaseEnv):
     def on_step(self) -> None:
         for i in range(self._config.num_agents):
             self.waypoints[i], self.planner_stats[i] = self.get_ego_planner(i).run_step()
-            self.num_completed[i] = self.planner_stats[i]["num_completed"]
+    
+    def reward(self):
+        return 0, {}
 
     def get_terminal_conditions(self):
         terminal_config = self._config.terminal
@@ -213,6 +218,16 @@ class CarlaFourLaneMaEnv(CarlaWptEnv):
         self.observation_space = self._get_observation_space()
         self.action_space = self._get_action_space()
 
+    def get_state(self):
+        state = super().get_state()
+        
+        # Add WM agent IDs to each state
+        ma_agent_ids = [ego.id for ego in self.egos.values()]
+        for i in range(self._config.num_agents):
+            state[i]["ma_agent_ids"] = ma_agent_ids
+            
+        return state
+
     def get_ego_planner(self, agent_idx) -> BasePlanner:
         return self.ego_planners[agent_idx]
 
@@ -225,12 +240,10 @@ class CarlaFourLaneMaEnv(CarlaWptEnv):
         self.ego_paths = self._config.ego_path
 
         for i in range(self.num_agents):
-            ego_x = self.ego_srcs[i][0]
-            ego_y = self.ego_srcs[i][1]
-            ego_z = self.ego_srcs[i][2]
-            ego_src = [ego_x, ego_y, ego_z]
-            # TODO: This part could be replace by ego_src*
-            ego_transform = carla.Transform(carla.Location(x=ego_x, y=ego_y, z=ego_z), carla.Rotation(yaw=-90))
+            ego_transform = carla.Transform(
+                carla.Location(x=self.ego_srcs[i][0], y=self.ego_srcs[i][1], z=self.ego_srcs[i][2]), 
+                carla.Rotation(yaw=-90)
+            )
             ego = self._world.spawn_actor(transform=ego_transform)
             self.egos[i] = ego
             self.ego_path = self._config.ego_path[i]
