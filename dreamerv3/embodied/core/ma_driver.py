@@ -79,7 +79,8 @@ class MADriver:
 
         # Handle different policy formats
         if isinstance(policy, (list, tuple)):
-            # Multi-agent mode: policy[0] for training agent, policy[1] for others
+            assert len(policy) >= 2, "[ERROR] Multi-agent mode requires at least two policies."
+            # Multi-agent mode: policy[0] for the trained agent, policy[1] for other agents
             for i in range(self._num_agents):
                 if i == 0:
                     agent_acts, self._state[i] = policy[0](obs[str(i)], self._state[i], **self._kwargs)

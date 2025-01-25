@@ -40,7 +40,7 @@ defaults:
     log_keys_mean: "(log_entropy)"
     log_keys_max: "^$"
     from_checkpoint: ""
-    ma_checkpoint: ""
+    ma_checkpoint: "logdir/new_right_turn_error7_822/checkpoint.ckpt"
     sync_every: 10
 
   envs:

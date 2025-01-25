@@ -139,6 +139,7 @@ class BirdeyeRenderer:
         color = env_state.get("background_vehicles_color")
         vehicle_polygons = self._world_manager.actor_polygons
         ego_id = self._ego.id
+        ma_ids = env_state.get("ma_agent_ids", [])
 
         for vehicle_id, polygon in vehicle_polygons.items():
             if vehicle_id == ego_id or should_filter(
@@ -146,14 +147,18 @@ class BirdeyeRenderer:
                 self._world_manager.actor_transforms[vehicle_id],
             ):
                 continue
-            vehicle_color = color.get(vehicle_id, None)
-            if vehicle_color is not None:
-                self._render_polygon(self._surface, polygon, vehicle_color)
+            if vehicle_id in ma_ids:
+                ma_vehicles_color = env_state.get("ma_vehicles_color")
+                self._render_polygon(self._surface, polygon, ma_vehicles_color)
+            else:
+                vehicle_color = color.get(vehicle_id, None)
+                if vehicle_color is not None:
+                    self._render_polygon(self._surface, polygon, vehicle_color)
 
     def _render_background_waypoints(self, **env_state):
         """Render the waypoints for background actors on the surface."""
         color = env_state.get("background_waypoints_color")
-        ma_color = env_state.get("ma_agent_waypoints_color")
+        ma_wpt_color = env_state.get("ma_agent_waypoints_color")
         extend_waypoints = env_state.get("extend_waypoints", False)
         ma_ids = env_state.get("ma_agent_ids", [])
         background_waypoints = self._world_manager.actor_actions
@@ -168,7 +173,7 @@ class BirdeyeRenderer:
             # Render non-ego MA agents waypoints
             for idx, agent_id in enumerate(ma_ids):
                 if agent_id != self._ego.id:
-                    self._render_waypoints(length=20, path_color=ma_color, idx=idx, id=agent_id, **env_state)
+                    self._render_waypoints(length=20, path_color=ma_wpt_color, idx=idx, id=agent_id, **env_state)
             if vehicle_id == self._ego.id or should_filter(
                 self._ego.get_transform(),
                 self._world_manager.actor_transforms[vehicle_id],

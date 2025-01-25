@@ -59,7 +59,8 @@ class BirdeyeHandler(BaseHandler):
             "background_waypoints_color": background_waypoints_color,
             "messages_color": messages_color,
             "extend_waypoints": self._config.extend_wpt,
-            "ma_agent_waypoints_color": Color.ORANGE_0
+            "ma_agent_waypoints_color": Color.ORANGE_0,
+            "ma_vehicles_color": (255, 113, 61),
         }
         if hasattr(self._config, "error_rate"):
             env_state["error_rate"] = self._config.error_rate
